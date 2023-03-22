@@ -45,11 +45,14 @@ type Bluk struct {
 	writes []mongo.WriteModel
 }
 
+//Insert 插入单条
 func (b *Bluk) Insert(doc interface{}) {
 	write := mongo.NewInsertOneModel()
 	write.SetDocument(doc)
 	b.writes = append(b.writes, write)
 }
+
+//Update Update
 func (b *Bluk) Update(doc ...interface{}) {
 	write := mongo.NewUpdateOneModel()
 	write.SetFilter(doc[0])
@@ -629,6 +632,32 @@ func (m *MongodbSim) FindOne(c string, query interface{}) (*map[string]interface
 	return m.FindOneByField(c, query, nil)
 }
 
+//GetRandomData 随机获取数据
+func (m *MongodbSim) GetRandomData(c string, query interface{}, count int) ([]bson.M, error) {
+	pipeline := []bson.M{
+		{"$match": query},
+		{"$sample": bson.M{"size": count}},
+	}
+
+	cursor, err := m.C.Database(m.DbName).Collection(c).Aggregate(context.Background(), pipeline, options.Aggregate())
+	if err != nil {
+		return nil, err
+	}
+	var results []bson.M
+
+	for cursor.Next(context.Background()) {
+		var result bson.M
+		err := cursor.Decode(&result)
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, result)
+	}
+
+	return results, nil
+
+}
+
 //查询单条对象
 func (m *MongodbSim) FindOneByField(c string, query interface{}, fields interface{}) (*map[string]interface{}, bool) {
 	defer catch()
@@ -824,4 +853,66 @@ func IsObjectIdHex(hex string) bool {
 		return false
 	}
 	return true
+}
+
+//GetRandomData 随机获取数据
+func GetRandomData(client *mongo.Client, dbName string, collectionName string, count int, query bson.M) ([]bson.M, error) {
+	pipeline := []bson.M{
+		{"$match": query},
+		{"$sample": bson.M{"size": count}},
+	}
+
+	// Set up the options for the aggregation
+	options := options.Aggregate().SetMaxTime(2 * time.Second)
+
+	cursor, err := client.Database(dbName).Collection(collectionName).Aggregate(context.Background(), pipeline, options)
+	if err != nil {
+		return nil, err
+	}
+	var results []bson.M
+	//if err = cursor.All(context.Background(), &results); err != nil {
+	//	return nil, err
+	//}
+
+	for cursor.Next(context.Background()) {
+		var result bson.M
+		err := cursor.Decode(&result)
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, result)
+	}
+
+	return results, nil
+}
+
+//getRandomData getRandomData
+func getRandomData(client *mongo.Client, dbName string, collectionName string, query bson.M, num int) ([]bson.M, error) {
+	// Set up the pipeline stages for the aggregation
+	pipeline := []bson.M{
+		{"$match": query},
+		{"$sample": bson.M{"size": num}},
+	}
+
+	// Set up the options for the aggregation
+	options := options.Aggregate().SetMaxTime(2 * time.Second)
+
+	// Execute the aggregation
+	cursor, err := client.Database(dbName).Collection(collectionName).Aggregate(context.Background(), pipeline, options)
+	if err != nil {
+		return nil, err
+	}
+
+	// Iterate through the cursor and decode the results
+	var results []bson.M
+	for cursor.Next(context.Background()) {
+		var result bson.M
+		err := cursor.Decode(&result)
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, result)
+	}
+
+	return results, nil
 }

@@ -186,3 +186,16 @@ func UnzipFromFile(dst, src string) error {
 	// 解压
 	return Unzip(dst, &zr.Reader)
 }
+
+//FileExist 判断一个文件或文件夹是否存在
+//输入文件路径，根据返回的bool值来判断文件或文件夹是否存在
+func FileExist(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return false, err
+}

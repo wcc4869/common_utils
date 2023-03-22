@@ -183,6 +183,14 @@ func (ec EsClient) CreateIndex(c context.Context, index string, mapping string) 
 	return
 }
 
+//ExistsIndex 判断索引存在
+func (ec EsClient) ExistsIndex(c context.Context, index string) (exists bool, err error) {
+	client := ec.GetEsConn()
+	defer ec.DestroyEsConn(client)
+	exists, err = client.IndexExists(index).Do(c)
+	return
+}
+
 //DeleteIndex DeleteIndex
 func (ec EsClient) DeleteIndex(c context.Context, index string) error {
 	client := ec.GetEsConn()
@@ -208,6 +216,14 @@ func (ec EsClient) AddMapField(c context.Context, index string, mapping string) 
 	client := ec.GetEsConn()
 	defer ec.DestroyEsConn(client)
 	_, err = client.PutMapping().Index(index).BodyString(mapping).Do(c)
+	return
+}
+
+//GetMapping 获取mapping
+func (ec EsClient) GetMapping(c context.Context, index string) (mas map[string]interface{}, err error) {
+	client := ec.GetEsConn()
+	defer ec.DestroyEsConn(client)
+	mas, err = client.GetMapping().Index(index).Do(c)
 	return
 }
 
@@ -277,7 +293,7 @@ func (ec EsClient) GetNoLimit(c context.Context, index string, query string) *[]
 
 }
 
-//GetByIdField GetByIdField
+//GetByIdField 根据ID获取数据
 func (ec EsClient) GetByIdField(c context.Context, index, id, fields string) *map[string]interface{} {
 	client := ec.GetEsConn()
 	defer ec.DestroyEsConn(client)
@@ -294,6 +310,7 @@ func (ec EsClient) GetByIdField(c context.Context, index, id, fields string) *ma
 				}
 			}
 		}()
+
 		query := `{"query":{"term":{"_id":"` + id + `"}}`
 		if len(fields) > 0 {
 			query = query + `,"_source":[` + fields + `]`
@@ -434,7 +451,7 @@ func (ec *EsClient) UpdateBulk(c context.Context, index string, docs ...[]map[st
 	return
 }
 
-// UpsertBulk 批量修改文档（不存在则插入）
+//UpsertBulk 批量修改文档（不存在则插入）
 func (ec *EsClient) UpsertBulk(ctx context.Context, index string, ids []string, docs []interface{}) error {
 	client := ec.GetEsConn()
 	defer ec.DestroyEsConn(client)
@@ -479,4 +496,31 @@ func (ec EsClient) DeleteByIds(c context.Context, index string, ids []string) (e
 	}
 
 	return
+}
+
+//Random 随机取数据
+func (ec EsClient) Random(c context.Context, index string, number int, query elastic.Query) (res []map[string]interface{}, err error) {
+	client := ec.GetEsConn()
+	defer ec.DestroyEsConn(client)
+	searchResult, err := client.Search().Index(index).Query(query).
+		SortBy(elastic.NewScriptSort(elastic.NewScript("Math.random()"), "number")).
+		From(0).
+		Size(number).
+		Do(c)
+
+	if err != nil {
+		log.Println("从ES查询出错", err.Error())
+		return nil, nil
+	}
+
+	if searchResult.Hits != nil {
+		for _, hit := range searchResult.Hits.Hits {
+			re := make(map[string]interface{})
+			json.Unmarshal(hit.Source, &re)
+			res = append(res, re)
+		}
+	}
+
+	return
+
 }

@@ -5,18 +5,18 @@ log库对zap库 ([github.com/uber-go/zap](http://github.com/uber-go/zap "github.
 ------
 
 ```
-go get github
+go get github.com/wcc4869/common_utils
 ```
 
 #### 快速开始
 
 ------
 
-```
+```go
 package main
 
 import (
-	"pkg.deepin.com/service/lib/log"
+	"github.com/wcc4869/common_utils/log"
 )
 
 func main() {
@@ -24,8 +24,8 @@ func main() {
 	log.Info("fetch URL success", "url", "www.chinauos.com")    //zap.SugaredLogger 写法
 	log.Infof("fetch URL:%s success", "www.chinauos.com")
 	log.Errorz("failed to fetch URL",                           //zap.Logger 写法
-		log.String("url", "www.chinauos.com"),
-		log.String("err", "url format is not correct"),
+	log.String("url", "www.chinauos.com"),
+	log.String("err", "url format is not correct"),
 	)
 }
 ```
@@ -36,7 +36,7 @@ func main() {
 
 
 
-```
+```json
 {
 	"level":"error",
 	"time":"2020-07-02 14:53:27",
@@ -58,11 +58,11 @@ func main() {
 
 ##### 函数式选项模式
 
-```
+```go
 package main
 
 import (
-	"pkg.deepin.com/service/lib/log"
+	"github.com/wcc4869/common_utils/log"
 )
 
 func main() {
@@ -115,7 +115,7 @@ func main() {
 
 ##### 结构体参数
 
-```
+```go
 package main
 
 import (
@@ -141,7 +141,7 @@ func main() {
 
 ###### 配置文件格式
 
-```
+```toml
 [Log]
 	output = "file"
 	level = "info"
@@ -168,7 +168,7 @@ go-micro（https://github.com/micro/go-micro) 中默认使用的是自己的logg
 package main
 
 import (
-	"pkg.deepin.com/service/lib/log"
+	"github.com/wcc4869/common_utils/log"
 	"github.com/micro/go-micro/v2/logger"
 )
 
