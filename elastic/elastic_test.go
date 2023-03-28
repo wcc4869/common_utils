@@ -11,7 +11,7 @@ var esc EsClient
 
 func init() {
 	esc = EsClient{
-		url:    "http://127.0.0.1:19800",
+		URL:    "http://192.168.3.241:9205,http://192.168.3.149:9200",
 		EcSize: 2,
 	}
 	esc.InitElasticSize()

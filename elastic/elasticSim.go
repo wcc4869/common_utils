@@ -17,30 +17,30 @@ import (
 
 type EsClient struct {
 	//client       *elastic.Client
-	url          string //服务地址,多个地址用,隔开
-	username     string
-	password     string
+	URL          string //服务地址,多个地址用,隔开
+	Username     string
+	Password     string
 	Address      []string
 	Pool         chan *elastic.Client
 	EcSize       int  //客户端个数
-	setSniff     bool //用于关闭 Sniff
-	header       http.Header
-	lastTime     int64
-	lastTimeLock sync.Mutex
-	ntimeout     int
+	SetSniff     bool //用于关闭 Sniff
+	Header       http.Header
+	LastTime     int64
+	LastTimeLock sync.Mutex
+	Ntimeout     int
 }
 
 //InitElasticSize 初始化连接池
 func (e EsClient) InitElasticSize() {
 	e.Pool = make(chan *elastic.Client, e.EcSize)
-	for _, s := range strings.Split(e.url, ",") {
+	for _, s := range strings.Split(e.URL, ",") {
 		e.Address = append(e.Address, s)
 	}
 	for i := 0; i < e.EcSize; i++ {
 		client, err := elastic.NewClient(
-			elastic.SetURL(e.url),        //elastic 服务地址,多个地址用,隔开
-			elastic.SetSniff(e.setSniff), //用于关闭 Sniff
-			elastic.SetBasicAuth(e.username, e.password),
+			elastic.SetURL(e.URL),        //elastic 服务地址,多个地址用,隔开
+			elastic.SetSniff(e.SetSniff), //用于关闭 Sniff
+			elastic.SetBasicAuth(e.Username, e.Password),
 			// 设置错误日志输出
 			elastic.SetErrorLog(log.New(os.Stderr, "ELASTIC ", log.LstdFlags)))
 		if err != nil {
@@ -57,26 +57,26 @@ func (e *EsClient) GetEsConn() *elastic.Client {
 		if c == nil || !c.IsRunning() {
 			log.Println("new esclient.", len(e.Pool))
 			client, err := elastic.NewClient(elastic.SetURL(e.Address...),
-				elastic.SetSniff(e.setSniff), elastic.SetBasicAuth(e.username, e.password))
+				elastic.SetSniff(e.SetSniff), elastic.SetBasicAuth(e.Username, e.Password))
 			if err == nil && client.IsRunning() {
 				return client
 			}
 		}
 		return c
-	case <-time.After(time.Second * 4):
+	case <-time.After(time.Second * 10):
 		//超时
-		e.ntimeout++
-		e.lastTimeLock.Lock()
-		defer e.lastTimeLock.Unlock()
+		e.Ntimeout++
+		e.LastTimeLock.Lock()
+		defer e.LastTimeLock.Unlock()
 		//12秒后允许创建链接
-		ct := time.Now().Unix() - e.lastTime
+		ct := time.Now().Unix() - e.LastTime
 		if ct > 12 {
-			e.lastTime = time.Now().Unix()
+			e.LastTime = time.Now().Unix()
 			log.Println("add client..", len(e.Pool))
-			c, _ := elastic.NewClient(elastic.SetURL(e.Address...), elastic.SetSniff(e.setSniff), elastic.SetBasicAuth(e.username, e.password))
+			c, _ := elastic.NewClient(elastic.SetURL(e.Address...), elastic.SetSniff(e.SetSniff), elastic.SetBasicAuth(e.Username, e.Password))
 			go func() {
 				for i := 0; i < 2; i++ {
-					client, _ := elastic.NewClient(elastic.SetURL(e.Address...), elastic.SetSniff(e.setSniff), elastic.SetBasicAuth(e.username, e.password))
+					client, _ := elastic.NewClient(elastic.SetURL(e.Address...), elastic.SetSniff(e.SetSniff), elastic.SetBasicAuth(e.Username, e.Password))
 					e.Pool <- client
 				}
 			}()
