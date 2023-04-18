@@ -144,16 +144,16 @@ func TestEsClient_InsertOrUpdateByJson(t *testing.T) {
 }
 
 func TestEsClient_Count(t *testing.T) {
-	//query := elastic.NewBoolQuery()
+	//query := elastic.NewBoolQuery().NewBoolQuery()
 	//query.Must(elastic.NewTermsQuery("one", []string{"one", "分类1"}))
 	//	query := `{
-	//    "bool": {
-	//        "must": {
-	//            "term": {
-	//                "one": "one"
-	//            }
-	//        }
-	//    }
+	//   "bool": {
+	//       "must": {
+	//           "term": {
+	//               "one": "one"
+	//           }
+	//       }
+	//   }
 	//}`
 	count, err := esc.Count(context.Background(), "bidding_v2", nil)
 	if err != nil {

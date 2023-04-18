@@ -822,7 +822,10 @@ func StringTOBsonId(id string) (bid primitive.ObjectID) {
 	defer catch()
 	if id != "" {
 		bid, _ = primitive.ObjectIDFromHex(id)
+	} else {
+		bid = primitive.NilObjectID
 	}
+
 	return
 }
 
